@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter | Simple, Fast & Modern</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-background-glow glow-1"></div>
+    <div class="app-background-glow glow-2"></div>
+
+    <main class="converter-wrapper">
+        <header class="app-header">
+            <div class="logo-pill">
+                <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+                    <path d="M12 6v2m0 8v2"></path>
+                </svg>
+                <span>Currency Exchange</span>
+            </div>
+            <h1>Instant Currency Converter</h1>
+            <p class="subtitle">Real-time conversion rates for global and regional currencies</p>
+        </header>
+
+        <section class="card converter-card">
+            <!-- Alert / Error message container -->
+            <div id="error-banner" class="alert-banner" role="alert" aria-live="polite" hidden>
+                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="error-message">Please enter a valid amount.</span>
+            </div>
+
+            <form id="converter-form" class="converter-form" onsubmit="return false;">
+                <!-- Amount Input -->
+                <div class="form-group amount-group">
+                    <label for="amount" class="field-label">Enter Amount</label>
+                    <div class="input-with-symbol">
+                        <span id="source-symbol-preview" class="currency-prefix-symbol">$</span>
+                        <input
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            placeholder="0.00"
+                            step="any"
+                            min="0.01"
+                            value="100"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    <!-- Quick Amount Chips -->
+                    <div class="quick-amounts" aria-label="Quick amount selection">
+                        <button type="button" class="chip-btn" data-value="10">$10</button>
+                        <button type="button" class="chip-btn" data-value="50">$50</button>
+                        <button type="button" class="chip-btn active" data-value="100">$100</button>
+                        <button type="button" class="chip-btn" data-value="500">$500</button>
+                        <button type="button" class="chip-btn" data-value="1000">$1,000</button>
+                    </div>
+                </div>
+
+                <!-- Currency Selectors Row -->
+                <div class="currency-row">
+                    <!-- Source Currency -->
+                    <div class="form-group currency-select-group">
+                        <label for="source-currency" class="field-label">From</label>
+                        <div class="select-wrapper">
+                            <select id="source-currency" name="source" aria-label="Source Currency">
+                                {% for code, info in currencies.items() %}
+                                <option value="{{ code }}" {% if code == 'USD' %}selected{% endif %}>
+                                    {{ info.flag }} {{ code }} – {{ info.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Swap Button -->
+                    <div class="swap-action-container">
+                        <button
+                            type="button"
+                            id="swap-btn"
+                            class="swap-btn"
+                            title="Swap Currencies"
+                            aria-label="Swap source and target currencies"
+                        >
+                            <svg class="swap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
+                                <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Target Currency -->
+                    <div class="form-group currency-select-group">
+                        <label for="target-currency" class="field-label">To</label>
+                        <div class="select-wrapper">
+                            <select id="target-currency" name="target" aria-label="Target Currency">
+                                {% for code, info in currencies.items() %}
+                                <option value="{{ code }}" {% if code == 'NPR' %}selected{% endif %}>
+                                    {{ info.flag }} {{ code }} – {{ info.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Convert Button -->
+                <button type="submit" id="convert-btn" class="convert-btn">
+                    <span class="btn-text">Convert Currency</span>
+                    <span class="spinner" hidden aria-hidden="true"></span>
+                </button>
+            </form>
+
+            <!-- Result Card Section -->
+            <section id="result-box" class="result-box" aria-live="polite">
+                <div class="result-header">
+                    <span class="result-label">Converted Total</span>
+                    <span id="rate-badge" class="badge">Live Rate</span>
+                </div>
+
+                <div class="result-amount-display">
+                    <span id="from-amount-subtext" class="subtext">100.00 USD =</span>
+                    <div class="converted-value-row">
+                        <span id="target-symbol-display" class="target-symbol">रू</span>
+                        <span id="result-amount" class="main-amount">13,525.00</span>
+                        <span id="target-code-display" class="target-code">NPR</span>
+                    </div>
+                </div>
+
+                <!-- Exchange Rate Section -->
+                <div class="rate-details-panel">
+                    <div class="rate-item">
+                        <span class="rate-caption">Exchange Rate</span>
+                        <strong id="exchange-rate-text" class="rate-value">1 USD = 135.25 NPR</strong>
+                    </div>
+                    <div class="rate-divider"></div>
+                    <div class="rate-item">
+                        <span class="rate-caption">Inverse Rate</span>
+                        <strong id="reverse-rate-text" class="rate-value">1 NPR = 0.0074 USD</strong>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- Supported Currencies Quick Reference Strip -->
+        <footer class="supported-currencies-strip">
+            <span class="strip-title">Supported Currencies:</span>
+            <div class="tags-container">
+                <span class="curr-tag">🇺🇸 USD</span>
+                <span class="curr-tag">🇳🇵 NPR</span>
+                <span class="curr-tag">🇪🇺 EUR</span>
+                <span class="curr-tag">🇬🇧 GBP</span>
+                <span class="curr-tag">🇮🇳 INR</span>
+                <span class="curr-tag">🇦🇺 AUD</span>
+                <span class="curr-tag">🇨🇦 CAD</span>
+                <span class="curr-tag">🇯🇵 JPY</span>
+            </div>
+        </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
